@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A browser-local decision workspace for evaluating source text against your questions."
+    />
+    <title>Decision workspace</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#context">Skip to workspace</a>
+    <div class="app-shell">
+      <aside class="rail" aria-label="Workspace navigation">
+        <a class="brand" href="#top" aria-label="JEV decision workspace home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span><strong>JEV</strong><small>Decision workspace</small></span>
+        </a>
+
+        <nav class="section-nav" aria-label="Jump to section">
+          <a href="#context"><span>01</span> Context</a>
+          <a href="#questions"><span>02</span> Questions</a>
+          <a href="#results"><span>03</span> Results</a>
+        </nav>
+
+      </aside>
+
+      <main id="top" class="workspace">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Local decision models</p>
+            <h1>Decision workspace</h1>
+          </div>
+          <div class="header-note" aria-label="Runtime information">
+            <span class="status-dot" aria-hidden="true"></span>
+            <p>In-memory session<br /><strong>Nothing saved</strong></p>
+          </div>
+        </header>
+
+
+
+        <div id="runtime-alert" class="runtime-alert" hidden role="status"></div>
+        <div id="error-message" class="error-message" hidden role="alert"></div>
+        <div id="live-status" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="intake-grid">
+          <section id="context" class="workspace-section source-section" aria-labelledby="context-heading">
+            <div class="section-heading">
+              <div>
+                <h2 id="context-heading">Source text</h2>
+              </div>
+              <button id="load-example" class="text-button" type="button">Load example</button>
+            </div>
+            <textarea id="source-text" name="source" rows="13" maxlength="6000" spellcheck="true" placeholder="Paste the text to classify…" aria-label="Source text" aria-describedby="source-help source-count"></textarea>
+            <div class="field-meta">
+              <p id="source-help">In memory only.</p>
+              <output id="source-count" for="source-text">0 / 6,000</output>
+            </div>
+          </section>
+
+          <section class="workspace-section model-section" aria-labelledby="model-heading">
+            <div class="section-heading compact-heading">
+              <div>
+                <h2 id="model-heading">Model</h2>
+              </div>
+              <span id="model-state" class="model-state">Not loaded</span>
+            </div>
+            <div class="model-grid">
+              <div>
+                <label class="field-label" for="model-select">Decision model</label>
+                <select id="model-select" name="model"></select>
+                <p id="model-description" class="model-description"></p>
+              </div>
+              <div class="model-facts" aria-label="Selected model details">
+                <div><span>Download</span><strong id="download-label">—</strong></div>
+                <div><span>Memory</span><strong id="memory-label">—</strong></div>
+              </div>
+            </div>
+            <a id="model-license" class="model-license" hidden target="_blank" rel="noreferrer"></a>
+            <div class="model-actions">
+              <button id="load-model" class="button secondary" type="button">Load model</button>
+              <div class="progress-wrap" aria-label="Model loading progress">
+                <progress id="load-progress" max="1" value="0"></progress>
+                <p id="load-status">Automatic · selected on load</p>
+                <p id="runtime-detail" class="sr-only"></p>
+              </div>
+            </div>
+            <p class="runtime-clarifier">On-device. First download needs internet.</p>
+          </section>
+        </div>
+
+        <section id="questions" class="workspace-section questions-section" aria-labelledby="questions-heading">
+          <div class="section-heading">
+            <div>
+              <h2 id="questions-heading">Questions</h2>
+            </div>
+            <button id="reset-questions" class="text-button" type="button">Reset</button>
+          </div>
+          <div id="question-list" class="question-list" aria-live="polite"></div>
+          <div class="question-controls">
+            <button id="add-question" class="button quiet" type="button">Add question</button>
+            <span id="question-count" class="count-label">3 of 8 questions</span>
+          </div>
+        </section>
+
+        <section class="evaluation-bar" aria-label="Evaluation controls">
+          <div>
+            <p id="evaluation-hint">Load a model to evaluate.</p>
+          </div>
+          <div class="evaluation-actions">
+            <button id="stop-evaluation" class="button quiet" type="button" disabled>Stop</button>
+            <button id="evaluate" class="button primary" type="button" disabled>Evaluate</button>
+          </div>
+        </section>
+
+        <section id="results" class="workspace-section results-section" aria-labelledby="results-heading">
+          <div class="section-heading compact-heading">
+            <div>
+              <h2 id="results-heading">Decisions</h2>
+            </div>
+            <div class="result-tools">
+              <button id="copy-results" class="text-button" type="button" disabled>Copy</button>
+              <button id="export-results" class="text-button" type="button" disabled>Export</button>
+            </div>
+          </div>
+          <div id="results-empty" class="empty-state">
+            <span class="empty-mark" aria-hidden="true">↗</span>
+            <div><strong>Decisions appear here</strong><p>Values and probabilities only.</p></div>
+          </div>
+          <div id="results-list" class="results-list" aria-live="polite" aria-label="Decision results"></div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

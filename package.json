@@ -1,0 +1,20 @@
+{
+  "name": "jevweb",
+  "version": "1.0.0",
+  "description": "Browser-only typed decision workspace powered by Wllama",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare:nimble": "node scripts/prepare-nimble.mjs",
+    "build:wllama-memory64": "node scripts/build-wllama-memory64.mjs"
+  },
+  "dependencies": {
+    "@wllama/wllama": "file:vendor/wllama-wllama-3.8.1-jev.2.tgz"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}

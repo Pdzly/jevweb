@@ -1,0 +1,120 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4248078..cfb0c0b 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -24,7 +24,6 @@ set(WLLAMA_LINK_OPTIONS
+     -sEXPORT_ES6=0
+     -sMODULARIZE=0
+     -sINITIAL_MEMORY=128MB
+-    -sMAXIMUM_MEMORY=4096MB
+     -sSTACK_SIZE=5MB
+     -sALLOW_MEMORY_GROWTH=1
+     -sFORCE_FILESYSTEM=1
+@@ -56,6 +55,7 @@ if (WLLAMA_COMPAT)
+     list(APPEND WLLAMA_LINK_OPTIONS
+         -fexceptions
+         -sASYNCIFY=1
++        -sMAXIMUM_MEMORY=4096MB
+         -sASYNCIFY_ADD=['wllama_start','wllama_action']
+     )
+ else()
+@@ -66,6 +66,8 @@ else()
+     list(APPEND WLLAMA_LINK_OPTIONS
+         -sMEMORY64=1
+         -fwasm-exceptions
++        # Memory64 needs room for Nimble 9B's >6 GiB CPU weight buffer.
++        -sMAXIMUM_MEMORY=16384MB
+         -sJSPI
+         -sJSPI_EXPORTS=['wllama_start','wllama_action']
+     )
+diff --git a/package.json b/package.json
+index 1dd1d6e..eb11ad2 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,13 @@
+ {
+   "name": "@wllama/wllama",
+-  "version": "3.8.1",
++  "version": "3.8.1-jev.2",
++  "wllamaRuntime": {
++    "upstreamGitCommit": "b68fd6427063266176bb0054befe9ff70b3258f1",
++    "llamaCppGitCommit": "46ca246de9bb1c35269722a6240d37d9dfd79cad",
++    "memoryModel": "Memory64",
++    "maximumMemory": "16384MB",
++    "compatMaximumMemory": "4096MB"
++  },
+   "description": "WebAssembly binding for llama.cpp - Enabling on-browser LLM inference",
+   "main": "index.js",
+   "type": "module",
+diff --git a/scripts/build_wasm.sh b/scripts/build_wasm.sh
+index 647e406..a3008c5 100755
+--- a/scripts/build_wasm.sh
++++ b/scripts/build_wasm.sh
+@@ -2,19 +2,18 @@
+ 
+ #set -e
+ 
+-export EMSDK_IMAGE_TAG="4.0.20"
++export EMSDK_IMAGE_REF="emscripten/emsdk@sha256:33e992367f721747d8008c9141c04fa017139e3557a60e0c80be93a0870fe462"
+ 
+ CURRENT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+ cd $CURRENT_PATH
+ 
+ # UID is set by bash, but GID is not (it is a zsh thing), fallback to id
+-export D_UID=${UID:-$(id -u)}
+-export D_GID=${GID:-$(id -g)}
++export D_UID=${D_UID:-${UID:-$(id -u)}}
++export D_GID=${D_GID:-${GID:-$(id -g)}}
+ 
+ if [[ $(uname -m) == "arm64" ]]; then
+   echo "Running on ARM64 processor"
+   export DOCKER_DEFAULT_PLATFORM="linux/arm64"
+-  export EMSDK_IMAGE_TAG="${EMSDK_IMAGE_TAG}-arm64"
+ fi
+ 
+ docker compose up llamacpp-wasm-builder --exit-code-from llamacpp-wasm-builder
+diff --git a/scripts/docker-compose.yml b/scripts/docker-compose.yml
+index ac0208d..7435657 100644
+--- a/scripts/docker-compose.yml
++++ b/scripts/docker-compose.yml
+@@ -4,13 +4,14 @@ services:
+     build:
+       context: .
+       dockerfile_inline: |
+-        ARG EMSDK_IMAGE_TAG=none  # modify it in build_wasm.sh
+-        FROM emscripten/emsdk:$${EMSDK_IMAGE_TAG}
++        ARG EMSDK_IMAGE_REF=none
++        FROM $${EMSDK_IMAGE_REF}
+         RUN apt update && apt install -y git
+       args:
+-        EMSDK_IMAGE_TAG: ${EMSDK_IMAGE_TAG}
++        EMSDK_IMAGE_REF: ${EMSDK_IMAGE_REF}
+     user: "${D_UID}:${D_GID}"
+     environment:
++      - EMDAWN_SHA256=${EMDAWN_SHA256:-}
+       - WLLAMA_TEST_BACKEND=${WLLAMA_TEST_BACKEND:-}
+       - SKIP_COMPAT=${SKIP_COMPAT:-}
+     volumes:
+@@ -32,6 +33,7 @@ services:
+         echo "Downloading $${EMDAWN_PKG}"
+         curl -L -o emdawn.zip \
+           "https://github.com/google/dawn/releases/download/$${DAWN_TAG}/$${EMDAWN_PKG}"
++        echo "$${EMDAWN_SHA256}  emdawn.zip" | sha256sum -c -
+         python3 -c "import zipfile; zf=zipfile.ZipFile('emdawn.zip','r'); zf.extractall('/source/build/emdawn'); zf.close()"
+ 
+         CMAKE_EXTRA_FLAGS="-DWLLAMA_TEST_BACKEND=OFF"
+diff --git a/src/workers-code/llama-cpp.js b/src/workers-code/llama-cpp.js
+index d0792b5..b622c7f 100644
+--- a/src/workers-code/llama-cpp.js
++++ b/src/workers-code/llama-cpp.js
+@@ -119,7 +119,9 @@ const getWModuleConfig = (_argMainScriptBlob) => {
+ //      https://github.com/godotengine/godot/issues/70621
+ const getWasmMemory = () => {
+   let minBytes = 128 * 1024 * 1024;
+-  let maxBytes = 4096 * 1024 * 1024;
++  // The default runtime is Memory64 and needs room for Nimble 9B's CPU weights.
++  // Compatibility mode remains wasm32 and must stay within its 4 GiB limit.
++  let maxBytes = (isCompat ? 4096 : 16384) * 1024 * 1024;
+   let stepBytes = 128 * 1024 * 1024;
+   while (maxBytes > minBytes) {
+     try {

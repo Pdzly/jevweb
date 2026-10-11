@@ -1,0 +1,26 @@
+{
+  "package": "@wllama/wllama",
+  "version": "3.8.1-jev.2",
+  "artifact": "vendor/wllama-wllama-3.8.1-jev.2.tgz",
+  "upstream": {
+    "repository": "https://github.com/ngxson/wllama.git",
+    "commit": "b68fd6427063266176bb0054befe9ff70b3258f1",
+    "llamaCppCommit": "46ca246de9bb1c35269722a6240d37d9dfd79cad"
+  },
+  "build": {
+    "emscriptenImage": "emscripten/emsdk@sha256:33e992367f721747d8008c9141c04fa017139e3557a60e0c80be93a0870fe462",
+    "dawnArchive": "https://github.com/google/dawn/releases/download/v20260317.182325/emdawnwebgpu_pkg-v20260317.182325.zip",
+    "dawnArchiveSha256": "8dcae86c630d76b6794b271c6572becba36f4237d132bee121a56638c3d76575"
+  },
+  "runtime": {
+    "default": {
+      "memoryModel": "Memory64",
+      "maximumMemory": "16384MB"
+    },
+    "compat": {
+      "memoryModel": "wasm32",
+      "maximumMemory": "4096MB"
+    }
+  },
+  "artifactSha256": "5339bcc85d2bccdf44a5d392227574bdb2eb6d5e13268dd0c20bf900c34658e8"
+}
