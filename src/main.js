@@ -359,6 +359,7 @@ function updateControls() {
   const ready = supported && modelAvailable && state.loadedModelId === model?.id;
   elements.modelSelect.disabled = busy;
   elements.loadModel.disabled = busy || !supported || !modelAvailable;
+  elements.evaluate.disabled = busy || !ready;
   elements.stop.disabled = !busy;
   elements.source.disabled = busy;
   elements.loadExample.disabled = busy;
